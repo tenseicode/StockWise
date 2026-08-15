@@ -1,0 +1,385 @@
+﻿:root {
+  /* Solid, eye-friendly palette - green dominant but muted, not neon */
+  --primary: #2E7D4F;
+  --primary-light: #3E9A63;
+  --primary-soft: #EAF6EF;
+  --accent: #E8A33D;
+  --danger: #D64545;
+  --gray-bg: #F5F8F6;
+  /* aliases */
+  --sw-primary: #2E7D4F;
+  --sw-dark: #255E3B;
+  --sw-sidebar-bg: #2E7D4F;
+  --sw-accent: #E8A33D;
+}
+
+/* Remap Bootstrap primary + related to the new palette */
+.btn-primary { --bs-btn-bg: var(--primary); --bs-btn-border-color: var(--primary); --bs-btn-hover-bg: var(--primary-light); --bs-btn-hover-border-color: var(--primary-light); --bs-btn-active-bg: var(--primary); --bs-btn-active-border-color: var(--primary); --bs-btn-focus-shadow-rgb: 27,94,32; --bs-btn-disabled-bg: var(--primary); --bs-btn-disabled-border-color: var(--primary); }
+.btn-outline-primary { --bs-btn-color: var(--primary); --bs-btn-border-color: var(--primary); --bs-btn-hover-bg: var(--primary); --bs-btn-hover-border-color: var(--primary); --bs-btn-active-bg: var(--primary); --bs-btn-active-border-color: var(--primary); }
+.text-primary { color: var(--primary) !important; }
+.bg-primary { background-color: var(--primary) !important; }
+.bg-success { background-color: var(--primary) !important; }
+.link-primary { color: var(--primary) !important; }
+.badge.bg-danger, .bg-danger { background-color: var(--danger) !important; }
+
+body.app-body { 
+  background: #f4f6fb; 
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.app-body .topbar {
+  background: var(--sw-dark);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+/* Navbar brand logo (top-left) — circular, white-bg logo */
+.navbar-brand img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; vertical-align: middle; }
+
+/* Main layout wrapper - fixed-height split: sidebar | scrollable content */
+.app-body > .container-fluid {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Remove Bootstrap's default gutters so the layout touches the page edges */
+  padding: 0;
+}
+.app-body > .container-fluid > .row {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  margin: 0;
+  width: 100%;
+  flex-wrap: nowrap; /* keep sidebar + content side by side (never wrap) */
+}
+.app-body > .container-fluid > .row > [class*='col-'] {
+  padding: 0; /* kill column gutters -> no gap between sidebar and content or page edges */
+}
+
+/* Sidebar - full-height, independent scroll (never moves with content) */
+.sidebar-col { 
+  background: var(--sw-sidebar-bg); 
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.sidebar-col::-webkit-scrollbar { display: none; }
+.sidebar { padding: 1rem .75rem 1rem .5rem; } /* no gap on the left edge */
+.sidebar .nav-link { color: #cbd5e1; border-radius: .4rem; margin-bottom: .15rem; position: relative; transition: background .15s ease, color .15s ease; }
+.sidebar .nav-link i { margin-right: .45rem; }
+.sidebar .nav-link:hover { background: rgba(255,255,255,.08); color: #fff; }
+/* Persistent "active page" highlight - clearly distinct from hover */
+.sidebar .nav-link.active {
+  background: var(--sw-primary);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: inset 4px 0 0 #fff;
+  border-radius: .4rem;
+}
+.sidebar .nav-link.active i { color: #fff; }
+.sidebar .sidebar-user { border-bottom: 1px solid rgba(255,255,255,.12); padding-bottom: .75rem; }
+
+/* Sidebar section labels + search bar */
+.sidebar .nav-label {
+  color: var(--sw-accent);
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: .55rem 1rem .25rem .5rem;
+  margin-top: .4rem;
+  margin-bottom: .1rem;
+  opacity: .85;
+}
+.sidebar .sidebar-search {
+  padding: .5rem .5rem .5rem;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+.sidebar .sidebar-search input {
+  background: #fff;
+  color: #212529;
+  border: none;
+  border-radius: .4rem;
+  height: 34px;
+}
+
+/* Content area - this is the ONLY scrollable region */
+.content-col {
+  height: 100%;
+  overflow-y: auto;
+  position: relative;
+  /* Fill ALL remaining width. flex-basis:0 (not auto) so the column measures 0 and
+     shares the row by grow - prevents wrapping below the sidebar when content is wide. */
+  flex: 1 1 0;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  /* Stack content then push the footer to the very bottom */
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1rem 0 1rem !important; /* tighter than Bootstrap p-4; balanced on both sides */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.content-col::-webkit-scrollbar { display: none; }
+
+/* Footer - separated from content, pinned to the very bottom, full-bleed (no side gaps) */
+footer {
+  margin: auto -1rem 0; /* auto-top pins to bottom; -1rem side margins remove the content-col gaps */
+  padding: 1rem 1rem;
+  flex-shrink: 0;
+  background: #fff;
+  border-top: 1px solid #e9ecef;
+  text-align: center;
+}
+
+/* Sidebar hide (toggled from the topbar button) - content expands full-width */
+body.sidebar-hidden .sidebar-col { display: none; }
+body.sidebar-hidden .content-col { padding-left: 1rem; }
+
+/* Stat cards */
+.stat-card { border: 0; border-radius: .75rem; box-shadow: 0 .2rem .6rem rgba(0,0,0,.06); }
+.stat-card .stat-label { color: #6c757d; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+.stat-card .stat-value { font-size: 1.6rem; font-weight: 700; }
+
+/* Auth */
+body.auth-body { background: var(--primary); min-height: 100vh; }
+.auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.auth-card { width: 100%; max-width: 420px; border: 0; border-radius: 1rem; }
+
+/* ---------- Combined login/register split with swap animation ---------- */
+.auth-split {
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.auth-panel {
+  flex: 1 1 50%;
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+.auth-panel .panel-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2.5rem 3rem;
+  transition: transform .32s ease, opacity .32s ease;
+  will-change: transform, opacity;
+}
+.auth-login-panel, .auth-register-panel { background: var(--gray-bg); align-items: center; }
+.auth-brand-panel {
+  background: var(--primary);
+  color: #fff;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+/* blurred hero that covers the whole panel (subtle blur - not too heavy) */
+.auth-brand-panel::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  background: url('../images/tcgc-hero.jpg') center/cover no-repeat;
+  filter: blur(3px) saturate(1.05) brightness(.78);
+  transform: scale(1.05);
+}
+/* soft dark overlay so the text stays readable */
+.auth-brand-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20,58,38,.35) 0%, rgba(16,44,29,.65) 100%);
+  box-shadow: inset 0 0 80px rgba(0,0,0,.35);
+}
+.auth-brand-panel > * { position: relative; z-index: 1; }
+
+/* login mode (default): form left, branding right */
+.auth-left .auth-login-panel { opacity: 1; transform: none; pointer-events: auto; }
+.auth-left .auth-brand-panel { opacity: 0; transform: translateX(-112%); pointer-events: none; }
+.auth-right .auth-brand-panel { opacity: 1; transform: none; pointer-events: auto; }
+.auth-right .auth-register-panel { opacity: 0; transform: translateX(112%); pointer-events: none; }
+
+/* register mode: branding left, form right */
+.auth-split.register-mode .auth-left .auth-login-panel { opacity: 0; transform: translateX(112%); pointer-events: none; }
+.auth-split.register-mode .auth-left .auth-brand-panel { opacity: 1; transform: none; pointer-events: auto; }
+.auth-split.register-mode .auth-right .auth-brand-panel { opacity: 0; transform: translateX(-112%); pointer-events: none; }
+.auth-split.register-mode .auth-right .auth-register-panel { opacity: 1; transform: none; pointer-events: auto; }
+
+/* swap: the visible panels sweep toward the centre as they exchange */
+.auth-split.is-swapping .auth-left > .panel-content { transform: translateX(50%); opacity: 0; }
+.auth-split.is-swapping .auth-right > .panel-content { transform: translateX(-50%); opacity: 0; }
+
+.auth-brand { display: flex; align-items: center; gap: .75rem; font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 1.5rem; }
+.auth-login-panel .auth-brand, .auth-register-panel .auth-brand { justify-content: center; font-size: 1.5rem; }
+.auth-login-panel .auth-brand img.auth-logo, .auth-register-panel .auth-brand img.auth-logo { height: 58px; width: auto; }
+.auth-form-inner { max-width: 400px; width: 100%; }
+
+.auth-brand-panel .auth-brand { color: #fff; justify-content: center; margin-bottom: .6rem; }
+.auth-brand-panel .tcgc-logo {
+  width: 92px;
+  height: 92px;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 .6rem 1.4rem rgba(0,0,0,.45), 0 0 0 3px rgba(255,255,255,.35);
+  margin-bottom: .5rem;
+}
+.auth-brand-panel h2 { font-weight: 700; font-size: 1.85rem; text-shadow: 0 2px 10px rgba(0,0,0,.5); }
+.auth-brand-panel p { max-width: 460px; opacity: .96; font-size: 1rem; line-height: 1.7; text-shadow: 0 1px 6px rgba(0,0,0,.55); }
+.auth-switch { font-size: .9rem; text-decoration: underline; }
+
+@media (max-width: 768px) {
+  .auth-panel.auth-right { display: none; }
+  .auth-panel.auth-left { flex: 1 1 100%; min-height: 100vh; }
+}
+
+/* Barcodes */
+.barcode-thumb { width: 90px; height: 34px; object-fit: contain; background: #fff; }
+.barcode-lg { max-width: 220px; }
+
+/* Charts */
+.chart-box { position: relative; height: 240px; }
+
+/* Cards */
+.stat-card { transition: transform .15s ease, box-shadow .15s ease; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 .4rem 1.2rem rgba(0,0,0,.08); }
+.card { transition: box-shadow .15s ease; }
+.card:hover { box-shadow: 0 .2rem .8rem rgba(0,0,0,.06); }
+
+/* Forms */
+.form-control, .form-select { border-radius: .5rem; border: 1px solid #dde3ed; }
+.form-control:focus, .form-select:focus { border-color: var(--sw-primary); box-shadow: 0 0 0 .2rem var(--primary-soft); }
+.form-label { font-weight: 500; font-size: .9rem; }
+
+
+/* (Toast width/radius/shadow now handled by the compact rules further down;
+   the old min-width:320px here was forcing toasts to render wide.) */
+
+
+/* Scrollable tables - constrain height, keep header visible, scroll rows */
+.table-scroll {
+  max-height: 60vh;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.table-scroll::-webkit-scrollbar { display: none; }
+.table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8f9fa; /* solid bg so scrolling rows don't show through */
+  box-shadow: inset 0 -1px 0 #e9ecef;
+}
+.table-scroll thead th.sortable-th { cursor: pointer; white-space: nowrap; user-select: none; }
+
+/* Sortable headers (used with .table-scroll / .sortable) */
+th[data-sort] { cursor: pointer; white-space: nowrap; user-select: none; }
+th[data-sort]:hover { background: #eef1f6 !important; }
+th[data-sort]::after {
+  content: '\f626'; /* bootstrap-icons arrows-sort (via unicode) */
+  margin-left: .35rem;
+  font-family: 'bootstrap-icons';
+  font-size: .7rem;
+  opacity: .45;
+}
+th[data-sort].sort-asc::after { content: '\f57d'; opacity: 1; color: var(--sw-primary); } /* arrow-up */
+th[data-sort].sort-desc::after { content: '\f57c'; opacity: 1; color: var(--sw-primary); } /* arrow-down */
+
+/* Tables - professional: clean header band, zebra rows, hover emphasis */
+.table thead th { font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: #495057; border-bottom: 2px solid #e9ecef; }
+.table tbody td { font-size: .88rem; }
+.table tbody tr:nth-child(even) { background: #fafbfc; }
+.table tbody tr:hover { background: #eef6f1; }
+.table-scroll thead th { text-transform: uppercase; letter-spacing: .05em; background: #f8f9fa; }
+.table td { vertical-align: middle; }
+.table-fill .table thead th { color: #495057; }
+
+/* Toasts - compact fixed width, wrapped justified text, auto-dismiss */
+#swToastStack { width: min(300px, calc(100vw - 2rem)); }
+#swToastStack .toast { width: fit-content; min-width: 0; max-width: 300px; border-radius: .6rem; box-shadow: 0 .4rem 1rem rgba(0,0,0,.22); }
+#swToastStack .toast-body { flex: 0 1 auto; white-space: normal; overflow-wrap: anywhere; word-break: break-word; text-align: left; }
+#swToastStack .btn-close { flex-shrink: 0; }
+.modal-content { border: none; border-radius: .75rem; }
+.modal-header { border-bottom: 1px solid #e9ecef; }
+.modal-footer { border-top: 1px solid #e9ecef; }
+.modal-title { font-size: 1rem; font-weight: 600; }
+.modal-sm .modal-content, .modal-dialog.modal-sm { max-width: 400px; --bs-modal-width: 400px; }
+
+/* One-line action buttons (never wrap) */
+.btn-nowrap { white-space: nowrap; }
+
+/* Buttons */
+.btn { border-radius: .5rem; font-weight: 500; }
+.btn-sm { border-radius: .4rem; }
+
+/* Badges */
+.badge { font-weight: 500; border-radius: .35rem; }
+
+/* Utilities */
+.border-start { border-left-width: 4px !important; }
+
+/* Signature */
+.sig-canvas { width: 100%; max-width: 520px; height: 160px; border: 1px dashed #adb5bd; border-radius: .5rem; background: #fff; touch-action: none; }
+.sig-thumb { height: 40px; border: 1px solid #dee2e6; border-radius: .25rem; background: #fff; }
+
+/* Progress tracker */
+.progress-tracker { list-style: none; display: flex; gap: .25rem; padding: 0; flex-wrap: wrap; }
+.progress-tracker li { flex: 1; text-align: center; min-width: 90px; color: #adb5bd; position: relative; }
+.progress-tracker .dot { display: block; width: 14px; height: 14px; border-radius: 50%; background: #dee2e6; margin: 0 auto .35rem; }
+.progress-tracker li.done { color: var(--sw-primary); }
+.progress-tracker li.done .dot { background: var(--sw-primary); }
+.progress-tracker .lbl { font-size: .72rem; text-transform: capitalize; }
+
+.notif-menu { min-width: 300px; }
+.notif-menu .dropdown-item { white-space: normal; }
+
+/* ---------- One-line action buttons ---------- */
+.btn-nowrap { white-space: nowrap; flex-shrink: 0; }
+.header-actions .form-control { min-width: 0; }
+
+/* ---------- Fill-to-bottom scrollable tables ---------- */
+.card.table-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+}
+.card.table-fill .card-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+.card.table-fill .table-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  max-height: none; /* let the table fill the space instead of capping at 60vh */
+}
+
+/* ---------- Filter bars ---------- */
+.filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  align-items: center;
+  padding: .75rem 1rem;
+  border-bottom: 1px solid #e9ecef;
+  background: #fbfcfc;
+}
+.filters-bar .form-select,
+.filters-bar .form-control { width: auto; min-width: 130px; }
+.filters-bar label { font-size: .78rem; color: #6c757d; margin-bottom: 0; white-space: nowrap; }
+.filters-bar .filter-group { display: flex; align-items: center; gap: .35rem; }

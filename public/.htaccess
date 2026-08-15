@@ -1,0 +1,25 @@
+<IfModule mod_rewrite.c>
+    Options -MultiViews
+    RewriteEngine On
+
+    # Pass through the Authorization header (used if HTTP auth is ever needed).
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Remove trailing slashes (except root).
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Route everything that is not a real file/directory to the front controller.
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# # Protect uploads from PHP execution.
+# <IfModule mod_php.c>
+#     <FilesMatch "\.php$">
+#         Require all denied
+#     </FilesMatch>
+# </IfModule>
