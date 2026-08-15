@@ -113,6 +113,6 @@ StockwiseV2/
 ├── public/          index.php (router), .htaccess, assets/, uploads/
 ├── middleware/      AuthMiddleware.php
 ├── helpers/         Security.php, BarcodeGenerator.php, NotificationHelper.php
-├── database/        schema.sql, setup.php, migrate.php
+├── database/        schema.sql
 └── .env             environment config
 ```
