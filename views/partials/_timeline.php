@@ -6,8 +6,13 @@
  */
 /** @var array $steps @var array $request @var array $meta */
 $currentIdx = null;
+$rejectIdx  = null; // index of the rejected step (if any)
 foreach ($steps as $i => $s) {
-    if (($s['status'] ?? '') === 'pending') { $currentIdx = $i; break; }
+    if (($s['status'] ?? '') === 'rejected') {
+        $rejectIdx = $i;
+    } elseif (($s['status'] ?? '') === 'pending' && $currentIdx === null) {
+        $currentIdx = $i;
+    }
 }
 ?>
 <div class="sw-timeline">
@@ -16,6 +21,7 @@ foreach ($steps as $i => $s) {
       $state  = ($s['status'] ?? 'pending') === 'approved' ? 'done' : (($s['status'] ?? 'pending') === 'rejected' ? 'rejected' : 'todo');
       $isCur  = ($i === $currentIdx) && $state === 'todo';
       $isLast = $i === array_key_last($steps);
+      $isAfterReject = $rejectIdx !== null && $i > $rejectIdx;
     ?>
     <div class="sw-step sw-step-<?= $state ?><?= $isCur ? ' current' : '' ?>">
       <div class="sw-step-head">
@@ -33,6 +39,8 @@ foreach ($steps as $i => $s) {
             <span class="badge bg-warning text-dark"><i class="bi bi-person-workspace"></i> Current (Delegated)</span>
           <?php elseif ($isCur): ?>
             <span class="badge bg-primary">Current</span>
+          <?php elseif ($isAfterReject): ?>
+            <span class="badge bg-secondary">Not reached</span>
           <?php else: ?>
             <span class="badge bg-secondary">Pending</span>
           <?php endif; ?>
@@ -63,20 +71,27 @@ foreach ($steps as $i => $s) {
 
   <!-- Final result node -->
   <?php
-    $finalState = ($request['status'] ?? '') === 'approved' ? 'done' : 'todo';
+    $finalState = 'todo';
+    $finalLabel = 'Pending';
+    $finalBadge = 'secondary';
+    if (($request['status'] ?? '') === 'approved') {
+        $finalState = 'done';
+        $finalBadge = 'success';
+        $finalLabel = $meta['label'] ?? 'Approved / Done';
+    } elseif (($request['status'] ?? '') === 'returned') {
+        $finalState = 'rejected';
+        $finalBadge = 'danger';
+        $finalLabel = 'Returned to Requester';
+    }
   ?>
   <div class="sw-step sw-step-<?= $finalState ?>">
     <div class="sw-step-head">
-      <span class="sw-dot"><i class="bi <?= $finalState === 'done' ? 'bi-check-lg' : '' ?>"></i></span>
+      <span class="sw-dot"><i class="bi <?= $finalState === 'done' ? 'bi-check-lg' : ($finalState === 'rejected' ? 'bi-x-lg' : '') ?>"></i></span>
     </div>
     <div class="sw-card">
       <div class="sw-role">Result</div>
       <div class="sw-status">
-        <?php if ($finalState === 'done'): ?>
-          <span class="badge bg-success"><?= Security::e($meta['label'] ?? 'Approved / Done') ?></span>
-        <?php else: ?>
-          <span class="badge bg-secondary">Pending</span>
-        <?php endif; ?>
+        <span class="badge bg-<?= $finalBadge ?>"><?= Security::e($finalLabel) ?></span>
       </div>
     </div>
   </div>

@@ -1,8 +1,8 @@
 # StockWise V2
 
 A modular, object-oriented (MVC) PHP 8.2+ web application for managing inventory,
-purchase requests (RIS / PPMP / PPE / BS), multi-stage approvals with digital
-signatures, barcode generation, and webcam barcode scanning.
+purchase requests (RIS / PPMP / PPE / ARE / BS), multi-stage approvals with digital
+signatures, delegation, barcode generation, and webcam barcode scanning.
 
 
 ## Default logins
@@ -11,13 +11,12 @@ Seed accounts use the password `Admin@123`:
 
 | Role | Email |
 |------|-------|
-| Admin | `admin@stockwise.local` |
-| Requestor | `` |
-| Budget Head | `` |
-| Procurement Head | `` |
-| VP Finance | `` |
-| Supply Personnel | `` |
-<Sequential Approval for Procurement not yet done>
+| Supply Administrator (Administrator) | `admin@stockwise.local` |
+| Requestor (1 per office) | `requestor@stockwise.local` |
+| Budget Head | `budget@stockwise.local` |
+| Procurement Head | `procurement@stockwise.local` |
+| VP Finance | `vp@stockwise.local` |
+| Supply Personnel | `supply@stockwise.local` |
 ---
 
 ## Key features & how they map to files
@@ -45,16 +44,32 @@ Seed accounts use the password `Admin@123`:
 - Users can **self-register** as a Requestor via the "Register" link on the login page (creates a requestor account and notifies admins).
 - Admins create accounts for the other roles in **Users** management.
 
-### Workflow
-1. **Requestor** creates a request (RIS / PPMP / PPE / BS) → saved as *draft*.
-2. Requestor **submits** → office limits are applied, status → *pending_budget*.
-   - RIS submission requires an approved (fulfilled) PPMP for the office/year.
-3. **Budget Head** approves (signs) → *pending_procurement*.
-4. **Procurement Head** approves (signs) → *pending_vp*.
-5. **VP Finance** approves (signs) → *pending_fulfillment*.
-6. **Supply Personnel** fulfills → deducts stock, logs a stock-out transaction,
-   status → *fulfilled* (or *partially_fulfilled* if stock shortage).
-7. Rejections set status to *denied*; requestor is notified at each step.
+### Request & Approval workflow
+1. **Requestor** creates a request (RIS / PPMP / PPE / ARE / BS) → saved as *draft*.
+2. Requestor **submits (signature required)** → office limits are applied, the
+   form's fixed approval chain is built, status → *in_review* (pending the
+   first approver).
+   - RIS submission requires an approved PPMP for the current year.
+   - The Supply Administrator step is **auto-delegated to Supply Personnel**
+     whenever delegation is enabled or no active Supply Administrator exists;
+     the delegation is dated and logged.
+3. Approvers act strictly in their fixed sequence. **Approve requires a digital
+   signature**; **both approve and reject require remarks**, and every action is
+   timestamped:
+   - PPMP / PPE : Supply Administrator → Budget Head → Procurement Head → VP
+   - RIS / ARE  : Supply Administrator → VP
+   - BS         : Supply Administrator
+4. A **rejection stops the flow and returns the request to the requester**
+   together with the approver's remarks. The requester can then edit and
+   **resubmit**; resubmission restarts the chain from the beginning and is
+   logged as a *Resubmitted* event.
+5. After the final signature the request becomes **Approved / Done**; Supply
+   Personnel can then issue stock on the transactions screen.
+6. The request page shows a **horizontal timeline** (current step, completed
+   steps with signature + date/time, pending steps, returned/rejected steps),
+   the request-level status label, all enforced timestamps (Needed-by,
+   Submitted, each action, delegation), and the full status history / audit
+   log. Every event also appears in the notification bell/page.
 
 ---
 

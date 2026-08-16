@@ -28,6 +28,7 @@ class SettingController extends BaseController
             'notify_on_register'    => !empty($d['notify_on_register']) ? '1' : '0',
             'items_per_page'        => max(10, (int)($d['items_per_page'] ?? 50)),
             'default_reorder_point' => max(0, (int)($d['default_reorder_point'] ?? 0)),
+            'supply_admin_delegation_enabled' => !empty($d['supply_admin_delegation_enabled']) ? '1' : '0',
         ]);
         AuthMiddleware::logAudit((int)$_SESSION['user_id'], 'settings_update');
         $this->redirect('settings', 'success', 'Settings saved.');

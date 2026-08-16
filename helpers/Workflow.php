@@ -12,9 +12,6 @@ class Workflow
     /** Supported request form types. */
     public const TYPES = ['RIS', 'PPMP', 'PPE', 'ARE', 'BS'];
 
-    /**
-     * Step role code => display label + the users.role_name that performs it.
-     */
     public const STEPS = [
         'supply_admin'     => ['label' => 'Supply Administrator', 'user_role' => 'admin'],
         'budget_head'      => ['label' => 'Budget Head',           'user_role' => 'budget_head'],
@@ -22,12 +19,6 @@ class Workflow
         'vp'               => ['label' => 'VP',                    'user_role' => 'vp_finance'],
     ];
 
-    /**
-     * Fixed approval sequence per form type (step role codes).
-     * PPE & PPMP : Supply Administrator -> Budget Head -> Procurement Head -> VP
-     * RIS & ARE  : Supply Administrator -> VP
-     * BS         : Supply Administrator
-     */
     public const FLOWS = [
         'PPMP' => ['supply_admin', 'budget_head', 'procurement_head', 'vp'],
         'PPE'  => ['supply_admin', 'budget_head', 'procurement_head', 'vp'],
@@ -65,10 +56,29 @@ class Workflow
         return in_array($roleCode, self::typeSteps($type), true);
     }
 
-    /** Should the Supply Administrator's first step be auto-delegated to Supply Personnel? */
+    /**
+     * Should the Supply Administrator's first step be auto-delegated to Supply Personnel?
+     * Auto-delegation triggers when an administrator enables it (busy), or automatically when
+     * no active Supply Administrator exists at all (absent).
+     */
     public static function autoDelegateEnabled(): bool
     {
-        return (string)Setting::get('supply_admin_delegation_enabled', '0') === '1';
+        if ((string)Setting::get('supply_admin_delegation_enabled', '0') === '1') {
+            return true;
+        }
+        return !self::hasActiveSupplyAdministrator();
+    }
+
+    /** True when at least one active Supply Administrator (admin) user exists. */
+    public static function hasActiveSupplyAdministrator(): bool
+    {
+        $rid = (int)db()->query("SELECT id FROM roles WHERE role_name = 'admin'")->fetchColumn();
+        if (!$rid) {
+            return false;
+        }
+        $stmt = db()->prepare('SELECT COUNT(*) FROM users WHERE role_id = ? AND is_active = 1');
+        $stmt->execute([$rid]);
+        return (int)$stmt->fetchColumn() > 0;
     }
 
     /** First active supply personnel user id (null when nobody holds the role). */
@@ -122,7 +132,7 @@ class Workflow
         if ($status === 'draft') {
             $out['label'] = 'Draft';
             $out['badge'] = 'secondary';
-            $out['detail'] = $status ? 'Not yet submitted.' : null;
+            $out['detail'] = 'Not yet submitted.';
         } elseif ($status === 'approved') {
             $out['label'] = 'Approved / Done';
             $out['badge'] = 'success';

@@ -250,6 +250,11 @@ INSERT INTO `offices` (`office_code`, `office_name`) VALUES
 INSERT INTO `users` (`office_id`, `role_id`, `email`, `password_hash`, `full_name`, `is_active`)
 VALUES
 (1, 1, 'admin@stockwise.local', '$2y$10$NVnHLCiWyERE0LlCJw.i9uI58GSjBTg7zAfsZhHvOEtruBj2rV72S', 'System Administrator', 1),
+(1, 3, 'requestor@stockwise.local', '$2y$10$NVnHLCiWyERE0LlCJw.i9uI58GSjBTg7zAfsZhHvOEtruBj2rV72S', 'Sample Requestor', 1),
+(2, 4, 'budget@stockwise.local',   '$2y$10$NVnHLCiWyERE0LlCJw.i9uI58GSjBTg7zAfsZhHvOEtruBj2rV72S', 'Budget Head', 1),
+(3, 5, 'procurement@stockwise.local', '$2y$10$NVnHLCiWyERE0LlCJw.i9uI58GSjBTg7zAfsZhHvOEtruBj2rV72S', 'Procurement Head', 1),
+(4, 6, 'vp@stockwise.local',       '$2y$10$NVnHLCiWyERE0LlCJw.i9uI58GSjBTg7zAfsZhHvOEtruBj2rV72S', 'VP Finance', 1),
+(5, 2, 'supply@stockwise.local',   '$2y$10$NVnHLCiWyERE0LlCJw.i9uI58GSjBTg7zAfsZhHvOEtruBj2rV72S', 'Supply Personnel', 1);
 
 -- Default Settings
 INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES

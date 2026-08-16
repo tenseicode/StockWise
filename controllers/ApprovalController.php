@@ -49,6 +49,23 @@ class ApprovalController extends BaseController
             Security::abort(404, 'Request not found.');
         }
 
+        // RBAC on the approval page: Requestors only see their own requests via
+        // their request view; approvers only see requests assigned to their step;
+        // Supply Administrator (admin) and Supply Personnel may view everything.
+        $role = (string)($user['role_name'] ?? '');
+        if ($role === 'requestor') {
+            Security::redirect('requests/view/' . $id);
+        } elseif (!in_array($role, ['admin', 'supply_personnel'], true)) {
+            $stepCode = [
+                'budget_head'      => 'budget_head',
+                'procurement_head' => 'procurement_head',
+                'vp_finance'       => 'vp',
+            ][$role] ?? null;
+            if ($stepCode === null || !Workflow::typeUsesStep((string)$request['type'], $stepCode)) {
+                Security::abort(404, 'Request not found.');
+            }
+        }
+
         $steps  = Request::steps($id);
         $action = $this->actionFor($user, $request, $steps);
 

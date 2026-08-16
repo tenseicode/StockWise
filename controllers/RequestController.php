@@ -172,27 +172,26 @@ class RequestController extends BaseController
         }
 
         $error = null;
-        if ($request['status'] === 'draft') {
-            if ($request['type'] === 'RIS') {
-                $stmt = db()->prepare(
-                    "SELECT COUNT(*) FROM requests
-                     WHERE type = 'PPMP' AND office_id = :office_id
-                       AND status = 'approved' AND YEAR(created_at) = :year"
-                );
-                $stmt->execute([
-                    ':office_id' => (int)$request['office_id'],
-                    ':year'      => date('Y'),
-                ]);
-                if ((int)$stmt->fetchColumn() === 0) {
-                    $error = 'RIS submission requires an approved PPMP for this office/year.';
-                }
+        if ($request['type'] === 'RIS') {
+            $stmt = db()->prepare(
+                "SELECT COUNT(*) FROM requests
+                 WHERE type = 'PPMP' AND office_id = :office_id
+                   AND status = 'approved' AND YEAR(created_at) = :year"
+            );
+            $stmt->execute([
+                ':office_id' => (int)$request['office_id'],
+                ':year'      => date('Y'),
+            ]);
+            if ((int)$stmt->fetchColumn() === 0) {
+                $error = 'RIS submission requires an approved PPMP for this office/year.';
             }
-            if ($error === null) {
-                $items   = Request::items($id);
-                $clamped = Request::applyOfficeLimits($id, (int)$request['office_id'], (int)date('Y'), $items);
-                if (!empty($clamped)) {
-                    $error = 'Some quantities were reduced due to office limits.';
-                }
+        }
+        if ($error === null) {
+            // Office limits are (re)applied on first submission and on resubmission.
+            $items   = Request::items($id);
+            $clamped = Request::applyOfficeLimits($id, (int)$request['office_id'], (int)date('Y'), $items);
+            if (!empty($clamped)) {
+                $error = 'Some quantities were reduced due to office limits.';
             }
         }
 
@@ -202,10 +201,10 @@ class RequestController extends BaseController
         }
 
         $resubmit = ($request['status'] === 'returned');
-        Request::startFlow($id, (string)$request['type'], $user, $signature);
+        Request::startFlow($id, (string)$request['type'], $user, $signature, $resubmit);
         AuthMiddleware::logAudit((int)$user['id'], $resubmit ? 'request_resubmit' : 'request_submit');
 
-        $this->notifyApprovers((int)$id, (string)$request['request_number'], (string)$request['type']);
+        $this->notifyApprovers((int)$id, (string)$request['request_number'], (string)$request['type'], $resubmit);
         $this->redirect('requests/view/' . $id, 'success',
             $resubmit ? 'Request resubmitted - the approval sequence restarted from the beginning.'
                       : 'Request submitted. Awaiting the Supply Administrator.');
@@ -228,8 +227,8 @@ class RequestController extends BaseController
         $this->redirect('requests', 'warning', 'Draft request deleted.');
     }
 
-    /** Notify the first approver(s) when a request is submitted/resubmitted. */
-    private function notifyApprovers(int $requestId, string $requestNumber, string $type): void
+    /** Notify the first approver(s) when a request is submitted or resubmitted. */
+    private function notifyApprovers(int $requestId, string $requestNumber, string $type, bool $resubmit = false): void
     {
         $queued = (array)Request::steps($requestId);
         $first  = $queued[0] ?? null;
@@ -240,18 +239,24 @@ class RequestController extends BaseController
             // Automatic/early delegation: Supply Personnel act on the supply step.
             NotificationHelper::notifyRole(
                 ['supply_personnel'],
-                "Request {$requestNumber} is at the Supply step and was delegated to Supply Personnel for action.",
+                ($resubmit
+                    ? "Request {$requestNumber} was resubmitted - the approval sequence restarted from the beginning. It is at the Supply step, delegated to Supply Personnel for action."
+                    : "Request {$requestNumber} is at the Supply step and was delegated to Supply Personnel for action."),
                 'approvals'
             );
             NotificationHelper::notifyRole(
                 ['admin'],
-                "Request {$requestNumber} was automatically delegated because the Supply Administrator is unavailable.",
+                ($resubmit
+                    ? "Request {$requestNumber} was resubmitted and automatically delegated to Supply Personnel because the Supply Administrator is unavailable."
+                    : "Request {$requestNumber} was automatically delegated because the Supply Administrator is unavailable."),
                 'approvals'
             );
         } else {
             NotificationHelper::notifyRole(
                 [Workflow::userRoleForStep($first['role_code'])],
-                "New $type request {$requestNumber} awaits your approval.",
+                ($resubmit
+                    ? "Request {$requestNumber} was resubmitted by the requester. The approval sequence restarted - awaiting your approval."
+                    : "New $type request {$requestNumber} awaits your approval."),
                 'approvals'
             );
         }

@@ -103,7 +103,12 @@ class Request
     }
 
     private const BASE_SELECT =
-        "SELECT r.*, o.office_name, o.office_code, u.full_name AS requestor_name
+        "SELECT r.*, o.office_name, o.office_code, u.full_name AS requestor_name,
+                EXISTS(
+                    SELECT 1 FROM request_approval_steps s
+                    WHERE s.request_id = r.id AND s.status = 'pending'
+                      AND s.delegation_status <> 'none'
+                ) AS has_delegated_step
          FROM requests r
          LEFT JOIN offices o ON o.id = r.office_id
          LEFT JOIN users u ON u.id = r.requestor_id";
@@ -238,6 +243,9 @@ class Request
             case 'in_review':
                 $role = (string)($r['current_step_role'] ?? '');
                 $label = $role !== '' ? 'Pending ' . Workflow::stepLabel($role) : 'In Review';
+                if (!empty($r['has_delegated_step'])) {
+                    $label .= ' (Delegated to Supply)';
+                }
                 return ['label' => $label, 'badge' => 'warning'];
         }
         return ['label' => ucwords(str_replace('_', ' ', $status)), 'badge' => 'secondary'];
@@ -367,8 +375,10 @@ class Request
      * Submit a request for the first time, or restart the chain on resubmission.
      * Recreates the approval steps for the form's type from the beginning.
      * Applies automatic delegation of the supply admin step when enabled.
+     *
+     * @param bool $resubmit true when this is a resubmission of a returned request.
      */
-    public static function startFlow(int $id, string $type, array $user, string $signature): bool
+    public static function startFlow(int $id, string $type, array $user, string $signature, bool $resubmit = false): bool
     {
         $roles = Workflow::typeSteps($type);
         if (empty($roles)) {
@@ -413,7 +423,7 @@ class Request
         );
         $upd->execute(['in_review', $roles[0], $now, $count, $signature ?: null, $id]);
 
-        self::logHistory($id, $user, 'submitted', 'Submitted');
+        self::logHistory($id, $user, $resubmit ? 'resubmitted' : 'submitted', $resubmit ? 'Resubmitted' : 'Submitted');
         if ($auto) {
             self::logHistory($id, null, 'delegated', 'Delegated to Supply Personnel',
                 'Automatic delegation - the Supply Administrator action was routed to Supply Personnel.');
