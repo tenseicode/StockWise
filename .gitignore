@@ -1,0 +1,9 @@
+/.env
+/storage/signatures/*.png
+/storage/signatures/**/*.png
+!/storage/signatures/.htaccess
+/storage/**/*.txt
+/storage/**/*.log
+/storage/beta_model_workflow.php
+/public/uploads/barcodes/*
+!/public/uploads/barcodes/.htaccess
